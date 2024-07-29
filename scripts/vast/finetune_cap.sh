@@ -7,19 +7,20 @@ output_dir=./output/vast/$config_name
 ##### VIDEO-CAP
 
 # caption-msrvtt
-python3 -m torch.distributed.launch \
+poetry run python -m torch.distributed.launch \
 --nnodes 1 \
 --node_rank 0 \
---nproc_per_node 8 \
+--nproc_per_node 1 \
 --master_port 9634 \
 ./run.py \
 --learning_rate 2e-5 \
---train_batch_size 128 \
---train_epoch 10 \
+--train_batch_size 1 \
+--test_batch_size 1 \
+--train_epoch 100 \
 --checkpointing true \
 --save_best true \
 --config ./config/vast/finetune_cfg/caption-msrvtt.json \
---pretrain_dir $output_dir \
+--pretrain_dir pretrained_weights/vast/ \
 --beam_size 3 \
 --first_eval false \
 --output_dir  $output_dir/downstream/caption-msrvtt-tvas \

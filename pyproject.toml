@@ -1,0 +1,47 @@
+[tool.poetry]
+name = "vast"
+version = "1.0.0"
+description = ""
+authors = ["Dietmar Schabus <dschabus@veritone.com>", "Markus Toman <mtoman@veritone.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+torch = "^2.2.0"
+torchvision = "^0.17.1"
+torchaudio = "^2.0.2"
+numpy = "^1.26.4"
+easydict = "^1.13"
+einops = "^0.7.0"
+tqdm = "^4.66.1"
+regex = "^2023.12.25"
+transformers = "^4.31.0"
+toolz = "^0.12.1"
+decord = "^0.6.0"
+h5py = "^3.10.0"
+webdataset = "^0.2.86"
+matplotlib = "^3.8.3"
+pandas = "^2.2.1"
+requests = "^2.31.0"
+pysoundfile = "^0.9.0.post1"
+opencv-python = "^4.10.0.82"
+openai-whisper = "^20231117"
+llmware = "^0.3.1"
+langchain = "^0.2.5"
+langchain-community = "^0.2.5"
+langchain-aws = "^0.1.7"
+ipdb = "^0.13.13"
+
+[tool.poetry.group.api]
+optional = true
+
+[tool.poetry.group.api.dependencies]
+fastapi = "^0.111.0"
+
+[tool.poetry.group.dev.dependencies]
+jupyterlab = "*"
+jupyter = "^1.0.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

@@ -41,8 +41,6 @@ def build_optimizer(model, args, checkpoint_optim):
         elif vision_clip  and  'visual' in k and  any(nd in k for nd in no_decay):
             clip_params_no_decay_visual.append(v)
             clip_params_name_visual.append(k)
-     
-        
         elif not any(nd in k for nd in no_decay):
             basic_params.append(v)
             basic_params_name.append(k)

@@ -16,50 +16,57 @@ class AudioMapper(object):
         self.frame_shift = 10
         self.sample_num = d_cfg.audio_sample_num
         self.audio_encoder_type = args.model_cfg.audio_encoder_type
-        if self.audio_encoder_type == 'ast':
+        if self.audio_encoder_type == "ast":
             self.mean = -4.2677393
             self.std = 4.5689974
-        elif self.audio_encoder_type == 'beats':
-            self.mean =  15.41663
-            self.std = 6.55582 
+        elif self.audio_encoder_type == "beats":
+            self.mean = 15.41663
+            self.std = 6.55582
         else:
             raise NotImplementedError
-       
-
 
     def read(self, id_):
-
         wav_file = os.path.join(self.audio_dir, id_)
-        
+
         if not os.path.exists(wav_file):
-            wav_file = os.path.join(self.audio_dir, id_+'.wav')
+            wav_file = os.path.join(self.audio_dir, id_ + ".wav")
         if not os.path.exists(wav_file):
-            wav_file = wav_file.replace('wav','mp3')
+            wav_file = wav_file.replace("wav", "mp3")
         if not os.path.exists(wav_file):
-            wav_file = wav_file.replace('mp3','mkv')
+            wav_file = wav_file.replace("mp3", "mkv")
         if not os.path.exists(wav_file):
-            print('not have audios', id_)
+            print("not have audios", id_)
             return torch.zeros(self.sample_num, self.target_length, self.melbins)
         try:
-            if self.audio_encoder_type == 'ast':
-                
+            if self.audio_encoder_type == "ast":
                 waveform, sr = torchaudio.load(wav_file)
 
                 waveform = waveform - waveform.mean()
-                fbank = torchaudio.compliance.kaldi.fbank(waveform, htk_compat=True, sample_frequency=sr, use_energy=False,
-                                                        window_type='hanning', num_mel_bins=self.melbins, dither=0.0, frame_shift=self.frame_shift)
+                fbank = torchaudio.compliance.kaldi.fbank(
+                    waveform,
+                    htk_compat=True,
+                    sample_frequency=sr,
+                    use_energy=False,
+                    window_type="hanning",
+                    num_mel_bins=self.melbins,
+                    dither=0.0,
+                    frame_shift=self.frame_shift,
+                )
 
-                                       
-            
-            elif self.audio_encoder_type == 'beats':
-
+            elif self.audio_encoder_type == "beats":
                 waveform, sr = torchaudio.load(wav_file)
                 if sr != 16000:
                     trans = torchaudio.transforms.Resample(sr, 16000)
                     waveform = trans(waveform)
-            
-                waveform = waveform * 2 ** 15
-                fbank = torchaudio.compliance.kaldi.fbank(waveform, num_mel_bins=self.melbins, sample_frequency=16000, frame_length=25, frame_shift=10)
+
+                waveform = waveform * 2**15
+                fbank = torchaudio.compliance.kaldi.fbank(
+                    waveform,
+                    num_mel_bins=self.melbins,
+                    sample_frequency=16000,
+                    frame_length=25,
+                    frame_shift=10,
+                )
 
             else:
                 raise NotImplementedError
@@ -67,28 +74,29 @@ class AudioMapper(object):
             # ### normalization
             fbank = (fbank - self.mean) / (self.std * 2)
             src_length = fbank.shape[0]
-            # #### sample 
+            # #### sample
             output_slices = []
-            pad_len = max(self.target_length * self.sample_num -src_length, self.target_length - src_length%self.target_length)
+            pad_len = max(
+                self.target_length * self.sample_num - src_length,
+                self.target_length - src_length % self.target_length,
+            )
             fbank = torch.nn.ZeroPad2d((0, 0, 0, pad_len))(fbank)
             total_slice_num = fbank.shape[0] // self.target_length
             total_slice_num = list(range(total_slice_num))
             total_slice_num = split(total_slice_num, self.sample_num)
-            
+
             if self.training:
                 sample_idx = [random.choice(i) for i in total_slice_num]
             else:
-                sample_idx = [i[(len(i)+1)//2-1] for i in total_slice_num]
+                sample_idx = [i[(len(i) + 1) // 2 - 1] for i in total_slice_num]
 
-            
             for i in sample_idx:
-                cur_bank = fbank[i*self.target_length : (i+1)*self.target_length]
+                cur_bank = fbank[i * self.target_length : (i + 1) * self.target_length]
                 output_slices.append(cur_bank)
 
-            fbank = torch.stack(output_slices,dim=0)   ### n, 1024, 128
+            fbank = torch.stack(output_slices, dim=0)  ### n, 1024, 128
             return fbank
-        
+
         except Exception as e:
             print(e)
-            return    
-                
+            return

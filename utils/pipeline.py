@@ -33,11 +33,8 @@ def train(model, optimizer, train_loader, val_loaders, run_cfg, start_step=0, ve
     evaluate_fn = evaluation_registry[model.config.evaluation_type]
 
     for step, (name, batch) in enumerate(train_loader):
-      
         ndata = train_loader.ndata
         task = name.split('--')[0]
-
-
 
         if run_cfg.fp16:
             with autocast():
@@ -52,20 +49,11 @@ def train(model, optimizer, train_loader, val_loaders, run_cfg, start_step=0, ve
             loss_dict['total_loss'] = loss
             loss_dict = {k:v.item() for k,v in loss_dict.items()}
             
-
-
-
-
-
-        
-
-
         if not name in loss_moving_averagetors:
                 ### first time initialize 
             for k in loss_dict.keys():
                 loss_moving_averagetors[f'loss_{name}/{k}'] = RunningMeter()
         ####accumulate loss
-
         for k,v in loss_dict.items():
             loss_moving_averagetors[f'loss_{name}/{k}'](v)
     
@@ -81,8 +69,6 @@ def train(model, optimizer, train_loader, val_loaders, run_cfg, start_step=0, ve
             LOGGER.info({name : averagetor.val for name, averagetor in loss_moving_averagetors.items()})                                   
         
         # update model params
-
-
         if run_cfg.fp16:
             optimizer.zero_grad()
             scaler.scale(loss).backward()
@@ -98,7 +84,6 @@ def train(model, optimizer, train_loader, val_loaders, run_cfg, start_step=0, ve
             for work in works:
                 work.wait()
 
-
         # if run_cfg.grad_norm != -1:
         #     grad_norm = clip_grad_norm_(model.parameters(), run_cfg.grad_norm)
 
@@ -110,8 +95,6 @@ def train(model, optimizer, train_loader, val_loaders, run_cfg, start_step=0, ve
             optimizer.zero_grad()
         pbar.update(1)
 
-
-        
         if (global_step+1) % run_cfg.valid_steps == 0:
             eval_log = evaluate_fn(model, val_loaders, run_cfg, global_step)
 
@@ -136,21 +119,13 @@ def train(model, optimizer, train_loader, val_loaders, run_cfg, start_step=0, ve
                             LOGGER.info(metric_logger_dict[eval_name][str(best_step)])          
                 
                 model_saver.save(model, global_step, optimizer,best_indicator, run_cfg.save_best)
-    
 
         if global_step >= run_cfg.num_train_steps:
             break
     pbar.close()
 
-
-
-
-
-
-    
   
 def test(model, test_loader, run_cfg):
-    
     evaluate_fn = evaluation_registry[model.config.evaluation_type]
     eval_log = evaluate_fn(model, test_loader, run_cfg, global_step=0)
     if dist.get_rank()==0:  
@@ -161,8 +136,6 @@ def test(model, test_loader, run_cfg):
                 #                 for k, v in metric.items() if not isinstance(v,str)})
                 LOGGER.info(f"==== evaluation--{eval_name}========\n")
                 LOGGER.info(metric)
-
-
 
 
 def get_best_name(eval_name, metric):
@@ -177,4 +150,3 @@ def get_best_name(eval_name, metric):
         return None 
     else:
         raise NotImplementedError
-
